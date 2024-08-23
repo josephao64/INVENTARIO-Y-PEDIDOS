@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Inventario y Pedidos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Gestión de Inventario y Pedidos</h1>
+            <div class="navigation">
+                <button class="nav-btn" onclick="showView('productView')">
+                    <i class="fas fa-box"></i> Productos
+                </button>
+                <button class="nav-btn" onclick="showView('branchView')">
+                    <i class="fas fa-store"></i> Sucursales
+                </button>
+                <button class="nav-btn" onclick="showView('orderView')">
+                    <i class="fas fa-shopping-cart"></i> Gestión de Pedidos
+                </button>
+                <button class="nav-btn" onclick="showView('reportView')">
+                    <i class="fas fa-file-alt"></i> Reportes
+                </button>
+            </div>
+        </header>
+
+        <!-- Vista de Productos -->
+        <section id="productView" class="view">
+            <h2><i class="fas fa-box"></i> Productos</h2>
+
+            <!-- Botones de gestión de productos -->
+            <div class="product-management-buttons">
+                <button class="btn" onclick="openModal('addProductModal')">Agregar Producto</button>
+                <button class="btn" onclick="openModal('addExistingProductModal')">Ingreso Producto</button>
+                <button class="btn" onclick="openModal('adjustInventoryModal')">Reajuste Inventario</button>
+                <button class="btn" id="deleteProductBtn" onclick="openModal('confirmDeleteProductModal')">Eliminar Producto</button>
+            </div>
+
+            <!-- Modal Agregar Producto -->
+            <div id="addProductModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('addProductModal')">&times;</span>
+                    <h3>Agregar Producto Nuevo</h3>
+                    <form>
+                        <div class="input-group">
+                            <label for="newProductName">Nombre del Producto:</label>
+                            <input type="text" id="newProductName" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="newProductQuantity">Cantidad Inicial:</label>
+                            <input type="number" id="newProductQuantity" required>
+                        </div>
+                        <button type="button" class="btn" onclick="addNewProduct()">Agregar Producto</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Ingreso Producto -->
+            <div id="addExistingProductModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('addExistingProductModal')">&times;</span>
+                    <h3>Ingreso de Producto a Producto Existente</h3>
+                    <form>
+                        <div class="input-group">
+                            <label for="existingProductSelect">Producto:</label>
+                            <select id="existingProductSelect" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="addQuantity">Cantidad a Agregar:</label>
+                            <input type="number" id="addQuantity" required>
+                        </div>
+                        <button type="button" class="btn" onclick="addToExistingProduct()">Agregar Cantidad</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Reajuste Inventario -->
+            <div id="adjustInventoryModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('adjustInventoryModal')">&times;</span>
+                    <h3>Reajuste de Inventario</h3>
+                    <form>
+                        <div class="input-group">
+                            <label for="adjustProductSelect">Producto:</label>
+                            <select id="adjustProductSelect" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="adjustQuantity">Cantidad para Ajustar (positivo o negativo):</label>
+                            <input type="number" id="adjustQuantity" required>
+                        </div>
+                        <button type="button" class="btn" onclick="adjustInventory()">Ajustar Inventario</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Confirmación Eliminar Producto -->
+            <div id="confirmDeleteProductModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('confirmDeleteProductModal')">&times;</span>
+                    <h3>Confirmar Eliminación</h3>
+                    <p>¿Está seguro de que desea eliminar este producto?</p>
+                    <button type="button" class="btn" onclick="deleteSelectedProduct()">Sí, eliminar</button>
+                    <button type="button" class="btn" onclick="closeModal('confirmDeleteProductModal')">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Tabla de productos -->
+            <h3>Lista de Productos</h3>
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Stock Inicial</th>
+                        <th>Stock Actual</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    <!-- Los productos se cargarán aquí -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Vista de Sucursales -->
+        <section id="branchView" class="view" style="display:none;">
+            <h2><i class="fas fa-store"></i> Sucursales</h2>
+
+            <!-- Botones de gestión de sucursales -->
+            <div class="branch-management-buttons">
+                <button class="btn" onclick="openModal('addBranchModal')">Agregar Sucursal</button>
+                <button class="btn" onclick="openModal('confirmDeleteBranchModal')">Eliminar</button>
+            </div>
+
+            <!-- Modal Agregar Sucursal -->
+            <div id="addBranchModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('addBranchModal')">&times;</span>
+                    <h3>Agregar Sucursal</h3>
+                    <form id="branchForm">
+                        <div class="input-group">
+                            <label for="branchName">Nombre de la Sucursal:</label>
+                            <input type="text" id="branchName" required>
+                        </div>
+                        <button type="submit" class="btn">Guardar Sucursal</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Confirmación Eliminar Sucursal -->
+            <div id="confirmDeleteBranchModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('confirmDeleteBranchModal')">&times;</span>
+                    <h3>Confirmar Eliminación</h3>
+                    <p>¿Está seguro de que desea eliminar esta sucursal?</p>
+                    <button type="button" class="btn" onclick="deleteSelectedBranch()">Sí, eliminar</button>
+                    <button type="button" class="btn" onclick="closeModal('confirmDeleteBranchModal')">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Tabla de sucursales -->
+            <h3>Lista de Sucursales</h3>
+            <table id="branchTable">
+                <thead>
+                    <tr>
+                        <th>Sucursal</th>
+                    </tr>
+                </thead>
+                <tbody id="branchTableBody">
+                    <!-- Las sucursales se cargarán aquí -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Vista de Pedidos -->
+        <section id="orderView" class="view" style="display:none;">
+            <h2><i class="fas fa-shopping-cart"></i> Gestión de Pedidos</h2>
+            <form id="orderForm">
+                <div class="input-group">
+                    <label for="branchSelect">Sucursal:</label>
+                    <select id="branchSelect" required></select>
+                </div>
+                <div class="input-group">
+                    <label for="productSelect">Producto:</label>
+                    <select id="productSelect" required></select>
+                </div>
+                <div class="input-group">
+                    <label for="orderQuantity">Cantidad del Pedido:</label>
+                    <input type="number" id="orderQuantity" required>
+                </div>
+                <button type="button" id="addOrderItem" class="btn">Agregar al Pedido</button>
+            </form>
+            <div id="orderItems"></div>
+            <div class="input-group">
+                <label for="orderDate">Fecha del Pedido:</label>
+                <input type="date" id="orderDate" required>
+            </div>
+            <button type="button" id="completeOrder" class="btn">Pedido Completado</button>
+        </section>
+
+        <!-- Vista de Reportes -->
+        <section id="reportView" class="view" style="display:none;">
+            <h2><i class="fas fa-file-alt"></i> Reportes</h2>
+            <div class="filter-group">
+                <label for="filterProduct">Filtrar por Producto:</label>
+                <select id="filterProduct">
+                    <option value="">Todos los productos</option>
+                </select>
+
+                <label for="filterBranch">Filtrar por Sucursal:</label>
+                <select id="filterBranch">
+                    <option value="">Todas las sucursales</option>
+                </select>
+
+                <label for="filterStartDate">Fecha Inicio:</label>
+                <input type="date" id="filterStartDate">
+
+                <label for="filterEndDate">Fecha Fin:</label>
+                <input type="date" id="filterEndDate">
+
+                <button type="button" id="generateReport" class="btn">Generar Reporte</button>
+            </div>
+            <div id="report"></div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
