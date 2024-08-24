@@ -6,6 +6,9 @@
     <title>Gestión de Inventario y Pedidos</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Librerías para exportación de reportes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -28,10 +31,9 @@
         </header>
 
         <!-- Vista de Productos -->
-        <section id="productView" class="view">
+        <section id="productView" class="view active">
             <h2><i class="fas fa-box"></i> Productos</h2>
 
-            <!-- Botones de gestión de productos -->
             <div class="product-management-buttons">
                 <button class="btn" onclick="openModal('addProductModal')">Agregar Producto</button>
                 <button class="btn" onclick="openModal('addExistingProductModal')">Ingreso Producto</button>
@@ -52,6 +54,14 @@
                         <div class="input-group">
                             <label for="newProductQuantity">Cantidad Inicial:</label>
                             <input type="number" id="newProductQuantity" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="productPresentation">Presentación:</label>
+                            <select id="productPresentation">
+                                <option value="Unidad">Unidad</option>
+                                <option value="Caja">Caja</option>
+                                <option value="Paquete">Paquete</option>
+                            </select>
                         </div>
                         <button type="button" class="btn" onclick="addNewProduct()">Agregar Producto</button>
                     </form>
@@ -113,6 +123,7 @@
                 <thead>
                     <tr>
                         <th>Producto</th>
+                        <th>Presentación</th>
                         <th>Stock Inicial</th>
                         <th>Stock Actual</th>
                     </tr>
@@ -124,10 +135,9 @@
         </section>
 
         <!-- Vista de Sucursales -->
-        <section id="branchView" class="view" style="display:none;">
+        <section id="branchView" class="view">
             <h2><i class="fas fa-store"></i> Sucursales</h2>
 
-            <!-- Botones de gestión de sucursales -->
             <div class="branch-management-buttons">
                 <button class="btn" onclick="openModal('addBranchModal')">Agregar Sucursal</button>
                 <button class="btn" onclick="openModal('confirmDeleteBranchModal')">Eliminar</button>
@@ -174,33 +184,67 @@
         </section>
 
         <!-- Vista de Pedidos -->
-        <section id="orderView" class="view" style="display:none;">
+        <section id="orderView" class="view">
             <h2><i class="fas fa-shopping-cart"></i> Gestión de Pedidos</h2>
-            <form id="orderForm">
-                <div class="input-group">
-                    <label for="branchSelect">Sucursal:</label>
-                    <select id="branchSelect" required></select>
+            <button class="btn" onclick="openModal('newOrderModal')">Nuevo Pedido</button>
+            
+            <!-- Modal Nuevo Pedido -->
+            <div id="newOrderModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('newOrderModal')">&times;</span>
+                    <h3>Nuevo Pedido</h3>
+                    <div class="input-group">
+                        <label for="orderName">Nombre del Pedido:</label>
+                        <input type="text" id="orderName" required>
+                    </div>
+                    <form id="orderForm">
+                        <div class="input-group">
+                            <label for="branchSelect">Sucursal:</label>
+                            <select id="branchSelect" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="productSelect">Producto:</label>
+                            <select id="productSelect" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="orderQuantity">Cantidad del Pedido:</label>
+                            <input type="number" id="orderQuantity" required>
+                        </div>
+                        <button type="button" id="addOrderItem" class="btn">Agregar al Pedido</button>
+                    </form>
+                    <div id="orderItems"></div>
+                    <div class="input-group">
+                        <label for="orderDate">Fecha del Pedido:</label>
+                        <input type="date" id="orderDate" required>
+                    </div>
+                    <button type="button" id="completeOrder" class="btn" onclick="confirmOrderCompletion()">Pedido Completado</button>
                 </div>
-                <div class="input-group">
-                    <label for="productSelect">Producto:</label>
-                    <select id="productSelect" required></select>
-                </div>
-                <div class="input-group">
-                    <label for="orderQuantity">Cantidad del Pedido:</label>
-                    <input type="number" id="orderQuantity" required>
-                </div>
-                <button type="button" id="addOrderItem" class="btn">Agregar al Pedido</button>
-            </form>
-            <div id="orderItems"></div>
-            <div class="input-group">
-                <label for="orderDate">Fecha del Pedido:</label>
-                <input type="date" id="orderDate" required>
             </div>
-            <button type="button" id="completeOrder" class="btn">Pedido Completado</button>
+
+            <!-- Tabla de Pedidos -->
+            <h3>Lista de Pedidos</h3>
+            <table id="orderListTable">
+                <thead>
+                    <tr>
+                        <th>Nombre del Pedido</th>
+                        <th>Fecha del Pedido</th>
+                    </tr>
+                </thead>
+                <tbody id="orderListTableBody">
+                    <!-- Los pedidos se cargarán aquí -->
+                </tbody>
+            </table>
+
+            <!-- Botones de acción para pedidos -->
+            <div class="order-actions">
+                <button class="btn" id="viewOrderBtn" onclick="viewSelectedOrder()" disabled>Ver Pedido</button>
+                <button class="btn" id="deleteOrderBtn" onclick="openDeleteOrderModal()" disabled>Eliminar Pedido</button>
+                <button class="btn" id="downloadOrderBtn" onclick="confirmOrderDownload()" disabled>Descargar Pedido</button>
+            </div>
         </section>
 
         <!-- Vista de Reportes -->
-        <section id="reportView" class="view" style="display:none;">
+        <section id="reportView" class="view">
             <h2><i class="fas fa-file-alt"></i> Reportes</h2>
             <div class="filter-group">
                 <label for="filterProduct">Filtrar por Producto:</label>
@@ -221,8 +265,46 @@
 
                 <button type="button" id="generateReport" class="btn">Generar Reporte</button>
             </div>
+            
+            <!-- Botones de Exportación -->
+            <div class="export-buttons">
+                <button onclick="exportReport('png')" class="btn">Exportar como Imagen</button>
+                <button onclick="exportReport('pdf')" class="btn">Exportar como PDF</button>
+                <button onclick="exportReport('excel')" class="btn">Exportar como Excel</button>
+            </div>
+            
             <div id="report"></div>
         </section>
+
+        <!-- Modal Ver Detalles del Pedido -->
+        <div id="viewOrderModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('viewOrderModal')">&times;</span>
+                <div id="orderDetailsContent"></div>
+            </div>
+        </div>
+
+        <!-- Modal Confirmación de Descarga de Pedido -->
+        <div id="confirmDownloadModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('confirmDownloadModal')">&times;</span>
+                <h3>Confirmar Descarga de Pedido</h3>
+                <p>¿Desea descargar la imagen del pedido?</p>
+                <button type="button" class="btn" onclick="downloadOrderImage()">Sí, descargar</button>
+                <button type="button" class="btn" onclick="closeModal('confirmDownloadModal')">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- Modal Confirmación Eliminar Pedido -->
+        <div id="confirmDeleteOrderModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('confirmDeleteOrderModal')">&times;</span>
+                <h3>Confirmar Eliminación</h3>
+                <p>¿Está seguro de que desea eliminar este pedido?</p>
+                <button type="button" class="btn" onclick="deleteSelectedOrder()">Sí, eliminar</button>
+                <button type="button" class="btn" onclick="closeModal('confirmDeleteOrderModal')">Cancelar</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

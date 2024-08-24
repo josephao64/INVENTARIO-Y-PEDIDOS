@@ -3,8 +3,10 @@ let products = [];
 let branches = [];
 let orders = [];
 let currentOrder = [];
+let orderList = [];
 let selectedProductName = null;
 let selectedBranchName = null;
+let selectedOrderName = null;
 
 window.onload = function () {
     let request = indexedDB.open('InventoryDB', 1);
@@ -109,19 +111,22 @@ function loadInitialData() {
 
     orderRequest.onsuccess = function (event) {
         orders = event.target.result;
+        orderList = orders;
+        displayOrderListTable();
     };
 }
 
 function addNewProduct() {
     let productName = document.getElementById('newProductName').value;
     let productQuantity = parseInt(document.getElementById('newProductQuantity').value);
+    let productPresentation = document.getElementById('productPresentation').value;
     
     if (productName.trim() === "" || isNaN(productQuantity) || productQuantity <= 0) {
-        alert("Por favor, ingrese un nombre de producto válido y una cantidad mayor que cero.");
+        alert("Por favor, ingrese un nombre de producto válido, una cantidad mayor que cero, y seleccione una presentación.");
         return;
     }
 
-    let product = { name: productName, initialQuantity: productQuantity, currentQuantity: productQuantity };
+    let product = { name: productName, initialQuantity: productQuantity, currentQuantity: productQuantity, presentation: productPresentation };
     
     addProduct(product);
     products.push(product);
@@ -132,6 +137,7 @@ function addNewProduct() {
     displayProductTable();
     document.getElementById('newProductName').value = '';
     document.getElementById('newProductQuantity').value = '';
+    document.getElementById('productPresentation').value = 'Unidad';
     closeModal('addProductModal');
 }
 
@@ -245,42 +251,202 @@ document.getElementById('addOrderItem').addEventListener('click', function () {
 
     let selectedProduct = products.find(p => p.name === product);
     if (selectedProduct && selectedProduct.currentQuantity >= quantity) {
-        selectedProduct.currentQuantity -= quantity; // Restar la cantidad del pedido
-        updateProduct(selectedProduct); // Actualizar en la base de datos
-        currentOrder.push({ branch, product, quantity });
-        displayProductTable(); // Actualizar la tabla de productos
+        selectedProduct.currentQuantity -= quantity;
+        updateProduct(selectedProduct);
+        currentOrder.push({ branch, product, presentation: selectedProduct.presentation, quantity });
+        displayProductTable();
         displayOrderItems();
         document.getElementById('orderForm').reset();
     } else {
         alert('No hay suficiente inventario para agregar este producto.');
     }
 
-    // Limpiar las casillas de selección después de agregar un pedido
     document.getElementById('branchSelect').value = '';
     document.getElementById('productSelect').value = '';
     document.getElementById('orderQuantity').value = '';
 });
 
-document.getElementById('completeOrder').addEventListener('click', function () {
+function confirmOrderCompletion() {
+    if (currentOrder.length > 0) {
+        openModal('confirmDownloadModal');
+    } else {
+        alert('Debe agregar productos al pedido antes de completarlo.');
+    }
+}
+
+function downloadOrderImage() {
+    let orderName = document.getElementById('orderName').value;
     let orderDate = document.getElementById('orderDate').value;
-    if (currentOrder.length > 0 && orderDate) {
+    
+    if (orderName && orderDate) {
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = 400;
+        canvas.height = 300;
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#000";
+        ctx.font = "16px Arial";
+        ctx.fillText(`Nombre del Pedido: ${orderName}`, 10, 30);
+        ctx.fillText(`Fecha del Pedido: ${orderDate}`, 10, 60);
+        ctx.fillText("Detalles del Pedido:", 10, 90);
+
+        currentOrder.forEach((item, index) => {
+            ctx.fillText(`${index + 1}. ${item.product} (${item.presentation}), Cantidad: ${item.quantity}, Sucursal: ${item.branch}`, 10, 120 + index * 30);
+        });
+
+        let link = document.createElement('a');
+        link.download = `${orderName}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        completeOrder();
+    } else {
+        alert('Debe ingresar un nombre de pedido y una fecha antes de completarlo.');
+    }
+}
+
+function completeOrder() {
+    let orderDate = document.getElementById('orderDate').value;
+    let orderName = document.getElementById('orderName').value;
+
+    if (currentOrder.length > 0 && orderDate && orderName) {
+        let orderDetails = { name: orderName, date: orderDate, items: currentOrder.slice() };
+        orderList.push(orderDetails);
         currentOrder.forEach(order => {
             order.date = orderDate;
             orders.push(order);
-            addOrder(order);
+            addOrder(order); 
         });
         currentOrder = [];
         document.getElementById('orderItems').innerHTML = '';
+        displayOrderListTable();
+        closeModal('confirmDownloadModal');
         alert('Pedido completado y agregado al reporte.');
         document.getElementById('orderForm').reset();
+        document.getElementById('orderName').value = '';
     } else {
-        alert('Debe agregar productos al pedido y seleccionar una fecha.');
+        alert('Debe ingresar un nombre de pedido, agregar productos al pedido y seleccionar una fecha.');
     }
-});
+}
+
+function displayOrderListTable() {
+    let orderListTableBody = document.getElementById('orderListTableBody');
+    orderListTableBody.innerHTML = '';
+    orderList.forEach(order => {
+        let row = document.createElement('tr');
+        row.innerHTML = `<td>${order.name}</td><td>${order.date}</td>`;
+        row.onclick = function() { toggleOrderSelection(row, order.name); };
+        orderListTableBody.appendChild(row);
+    });
+}
+
+function toggleOrderSelection(row, orderName) {
+    if (selectedOrderName === orderName) {
+        row.classList.remove('selected-row');
+        selectedOrderName = null;
+        disableOrderActionButtons();
+    } else {
+        document.querySelectorAll('#orderListTableBody tr').forEach(tr => tr.classList.remove('selected-row'));
+        row.classList.add('selected-row');
+        selectedOrderName = orderName;
+        enableOrderActionButtons();
+    }
+}
+
+function enableOrderActionButtons() {
+    document.getElementById('viewOrderBtn').disabled = false;
+    document.getElementById('deleteOrderBtn').disabled = false;
+    document.getElementById('downloadOrderBtn').disabled = false;
+}
+
+function disableOrderActionButtons() {
+    document.getElementById('viewOrderBtn').disabled = true;
+    document.getElementById('deleteOrderBtn').disabled = true;
+    document.getElementById('downloadOrderBtn').disabled = true;
+}
+
+function viewSelectedOrder() {
+    if (selectedOrderName) {
+        viewOrderDetails(selectedOrderName);
+    }
+}
+
+function openDeleteOrderModal() {
+    if (selectedOrderName) {
+        openModal('confirmDeleteOrderModal');
+    }
+}
+
+function deleteSelectedOrder() {
+    if (selectedOrderName) {
+        orderList = orderList.filter(o => o.name !== selectedOrderName);
+        orders = orders.filter(o => o.name !== selectedOrderName);
+        displayOrderListTable();
+        selectedOrderName = null;
+        alert('Pedido eliminado correctamente.');
+        closeModal('confirmDeleteOrderModal');
+        disableOrderActionButtons();
+    } else {
+        alert('Por favor, seleccione un pedido para eliminar.');
+    }
+}
+
+function viewOrderDetails(orderName) {
+    let order = orderList.find(o => o.name === orderName);
+    if (order) {
+        let orderDetailsContent = document.getElementById('orderDetailsContent');
+        orderDetailsContent.innerHTML = `<h4>Detalle del Pedido: ${order.name}</h4><p>Fecha: ${order.date}</p>`;
+        order.items.forEach(item => {
+            let itemDiv = document.createElement('div');
+            itemDiv.innerHTML = `<p><strong>Sucursal:</strong> ${item.branch}, <strong>Producto:</strong> ${item.product} (${item.presentation}), <strong>Cantidad:</strong> ${item.quantity}</p>`;
+            orderDetailsContent.appendChild(itemDiv);
+        });
+        openModal('viewOrderModal');
+    }
+}
 
 document.getElementById('generateReport').addEventListener('click', function () {
     generateProductReport();
 });
+
+function exportReport(format) {
+    let reportContent = document.getElementById('report').innerHTML;
+    if (format === 'png') {
+        exportReportAsImage();
+    } else if (format === 'pdf') {
+        exportReportAsPDF();
+    } else if (format === 'excel') {
+        exportReportAsExcel();
+    }
+}
+
+function exportReportAsImage() {
+    html2canvas(document.getElementById('report')).then(canvas => {
+        let link = document.createElement('a');
+        link.download = 'reporte.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+}
+
+function exportReportAsPDF() {
+    let doc = new jsPDF();
+    doc.fromHTML(document.getElementById('report').innerHTML, 10, 10);
+    doc.save('reporte.pdf');
+}
+
+function exportReportAsExcel() {
+    let tableHTML = document.getElementById('report').innerHTML;
+    let uri = 'data:application/vnd.ms-excel,' + encodeURIComponent(tableHTML);
+    let link = document.createElement('a');
+    link.href = uri;
+    link.style = 'visibility:hidden';
+    link.download = 'reporte.xls';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
 function showView(viewId) {
     document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
@@ -301,7 +467,7 @@ function updateProductSelect() {
     products.forEach(product => {
         let option = document.createElement('option');
         option.value = product.name;
-        option.textContent = product.name;
+        option.textContent = `${product.name} (${product.presentation})`;
         productSelect.appendChild(option);
     });
 }
@@ -312,7 +478,7 @@ function updateExistingProductSelect() {
     products.forEach(product => {
         let option = document.createElement('option');
         option.value = product.name;
-        option.textContent = product.name;
+        option.textContent = `${product.name} (${product.presentation})`;
         existingProductSelect.appendChild(option);
     });
 }
@@ -323,7 +489,7 @@ function updateAdjustProductSelect() {
     products.forEach(product => {
         let option = document.createElement('option');
         option.value = product.name;
-        option.textContent = product.name;
+        option.textContent = `${product.name} (${product.presentation})`;
         adjustProductSelect.appendChild(option);
     });
 }
@@ -348,7 +514,7 @@ function updateFilterOptions() {
     products.forEach(product => {
         let option = document.createElement('option');
         option.value = product.name;
-        option.textContent = product.name;
+        option.textContent = `${product.name} (${product.presentation})`;
         filterProduct.appendChild(option);
     });
 
@@ -366,9 +532,7 @@ function displayOrderItems() {
     currentOrder.forEach(order => {
         let orderItem = document.createElement('div');
         orderItem.className = 'order-item';
-        orderItem.innerHTML = `<p><strong>Sucursal:</strong> ${order.branch}</p>
-                               <p><strong>Producto:</strong> ${order.product}</p>
-                               <p><strong>Cantidad:</strong> ${order.quantity}</p>`;
+        orderItem.innerHTML = `<p><strong>Sucursal:</strong> ${order.branch}, <strong>Producto:</strong> ${order.product} (${order.presentation}), <strong>Cantidad:</strong> ${order.quantity}</p>`;
         orderItemsDiv.appendChild(orderItem);
     });
 }
@@ -378,7 +542,7 @@ function displayProductTable() {
     productTableBody.innerHTML = '';
     products.forEach(product => {
         let row = document.createElement('tr');
-        row.innerHTML = `<td>${product.name}</td><td>${product.initialQuantity}</td><td>${product.currentQuantity}</td>`;
+        row.innerHTML = `<td>${product.name}</td><td>${product.presentation}</td><td>${product.initialQuantity}</td><td>${product.currentQuantity}</td>`;
         row.onclick = function() { toggleProductSelection(row, product.name); };
         productTableBody.appendChild(row);
     });
@@ -447,7 +611,7 @@ function generateProductReport() {
             let productTitleCell = document.createElement('td');
             productTitleCell.colSpan = 5;
             productTitleCell.style.textAlign = 'center';
-            productTitleCell.innerHTML = `<strong>${product.name}</strong>`;
+            productTitleCell.innerHTML = `<strong>${product.name} (${product.presentation})</strong>`;
             productTitleRow.appendChild(productTitleCell);
             table.appendChild(productTitleRow);
 
@@ -456,7 +620,7 @@ function generateProductReport() {
             table.appendChild(initialStockRow);
 
             relevantOrders.forEach(order => {
-                currentStock -= order.quantity;  // Restar cantidad pedida del stock actual
+                currentStock -= order.quantity;
                 let orderRow = document.createElement('tr');
                 orderRow.innerHTML = `<td>-</td><td>${order.branch}</td><td>${order.quantity}</td><td>${order.date}</td><td>${currentStock}</td>`;
                 table.appendChild(orderRow);
