@@ -10,17 +10,15 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    width: 100%; /* Ajuste para dispositivos móviles */
 }
 
 header {
     text-align: center;
     margin-bottom: 20px;
-    padding: 0 15px; /* Ajuste para margen en dispositivos móviles */
 }
 
 h1 {
-    font-size: 2em; /* Reducción del tamaño de la fuente para móviles */
+    font-size: 2.5em;
     color: #2c3e50;
 }
 
@@ -28,19 +26,20 @@ h1 {
     margin-bottom: 20px;
     display: flex;
     justify-content: center;
-    flex-wrap: wrap; /* Permite que los botones se envuelvan en dispositivos móviles */
     gap: 10px;
+    flex-wrap: wrap; /* Para que los botones se acomoden en filas en pantallas pequeñas */
 }
 
 .nav-btn {
-    padding: 10px 15px; /* Ajuste del padding para dispositivos móviles */
+    padding: 10px 20px;
     background-color: #3498db;
     color: #fff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-    font-size: 0.9em; /* Reducción del tamaño de fuente para móviles */
+    flex: 1 1 auto; /* Ajusta los botones para que se adapten al ancho disponible */
+    text-align: center;
 }
 
 .nav-btn:hover {
@@ -49,14 +48,13 @@ h1 {
 
 .view {
     display: none;
-    padding: 0 15px; /* Añadir padding para mejorar la visualización en móviles */
 }
 
 .view.active {
     display: block;
 }
 
-.input-group, .filter-group, .product-management-buttons, .branch-management-buttons {
+.input-group, .filter-group, .product-management-buttons, .branch-management-buttons, .order-actions {
     margin-bottom: 15px;
     display: flex;
     flex-wrap: wrap;
@@ -66,13 +64,13 @@ h1 {
 }
 
 .input-group label {
-    flex: 1 0 100%; /* Coloca los labels en una nueva línea en dispositivos móviles */
+    flex: 1;
     font-size: 1em;
     color: #555;
 }
 
 .input-group input, .input-group select {
-    flex: 1 0 100%; /* Ajuste del input para ocupar todo el ancho en móviles */
+    flex: 2;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -83,14 +81,13 @@ h1 {
 button {
     background-color: #3498db;
     color: #fff;
-    font-size: 0.9em; /* Ajuste de tamaño de fuente para móviles */
+    font-size: 1em;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-    padding: 10px; /* Ajuste del padding para dispositivos móviles */
-    width: 100%; /* Hacer que los botones ocupen el 100% del ancho en dispositivos móviles */
-    margin-top: 5px;
+    padding: 10px;
+    width: 100%; /* Asegura que los botones se estiren al 100% del contenedor en pantallas pequeñas */
 }
 
 button:hover {
@@ -101,7 +98,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    overflow-x: auto; /* Añadir scroll horizontal en dispositivos móviles */
+    font-size: 0.9em; /* Ajusta el tamaño de la fuente para dispositivos móviles */
 }
 
 table, th, td {
@@ -111,7 +108,6 @@ table, th, td {
 th, td {
     padding: 12px;
     text-align: left;
-    font-size: 0.9em; /* Reducción del tamaño de fuente para móviles */
 }
 
 th {
@@ -132,10 +128,10 @@ th {
 
 .modal-content {
     background-color: #fff;
-    margin: 5% auto; /* Reducción del margen para mejorar la visualización en móviles */
+    margin: 10% auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 90%; /* Ajuste del ancho de la modal para dispositivos móviles */
+    width: 90%;
     max-width: 500px;
     border-radius: 10px;
 }
@@ -143,7 +139,7 @@ th {
 .close {
     color: #aaa;
     float: right;
-    font-size: 24px; /* Reducción del tamaño de la fuente para móviles */
+    font-size: 28px;
     font-weight: bold;
 }
 
@@ -158,28 +154,28 @@ th {
     background-color: #f0a3a3 !important;
 }
 
-/* Media Queries para dispositivos móviles */
+/* Media Queries para Responsividad */
 @media (max-width: 768px) {
+    h1 {
+        font-size: 1.8em; /* Tamaño de fuente más pequeño en pantallas móviles */
+    }
+
+    .input-group, .filter-group, .product-management-buttons, .branch-management-buttons, .order-actions {
+        flex-direction: column; /* Coloca los elementos en una columna en pantallas más pequeñas */
+        align-items: stretch;
+    }
+
     .nav-btn {
-        width: 100%; /* Asegura que los botones de navegación ocupen todo el ancho en pantallas pequeñas */
+        flex: 1 1 100%; /* Cada botón ocupa el 100% del ancho del contenedor */
+        margin-bottom: 10px; /* Espacio inferior entre botones */
     }
 
-    .input-group, .filter-group {
-        flex-direction: column; /* Cambia a diseño de columna para pantallas pequeñas */
-        align-items: stretch; /* Asegura que los elementos se estiren a lo largo del contenedor */
+    table, th, td {
+        font-size: 0.8em; /* Reduce el tamaño de fuente en tablas para dispositivos móviles */
     }
 
-    .input-group input, .input-group select {
-        width: 100%; /* Ajuste de ancho completo para entradas en dispositivos móviles */
-    }
-
-    .product-management-buttons, .branch-management-buttons, .order-actions {
-        flex-direction: column; /* Botones en columna para pantallas pequeñas */
-        width: 100%; /* Ocupan todo el ancho del contenedor */
-    }
-
-    button {
-        width: 100%; /* Asegura que todos los botones sean del ancho completo en pantallas pequeñas */
-        font-size: 1em; /* Ajusta el tamaño del texto en botones */
+    .modal-content {
+        width: 95%; /* Mayor ancho para modales en dispositivos móviles */
+        margin-top: 20%; /* Margen superior mayor para ajustar la vista */
     }
 }
