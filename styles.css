@@ -10,15 +10,17 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    width: 100%; /* Ajuste para dispositivos móviles */
 }
 
 header {
     text-align: center;
     margin-bottom: 20px;
+    padding: 0 15px; /* Ajuste para margen en dispositivos móviles */
 }
 
 h1 {
-    font-size: 2.5em;
+    font-size: 2em; /* Reducción del tamaño de la fuente para móviles */
     color: #2c3e50;
 }
 
@@ -26,17 +28,19 @@ h1 {
     margin-bottom: 20px;
     display: flex;
     justify-content: center;
+    flex-wrap: wrap; /* Permite que los botones se envuelvan en dispositivos móviles */
     gap: 10px;
 }
 
 .nav-btn {
-    padding: 10px 20px;
+    padding: 10px 15px; /* Ajuste del padding para dispositivos móviles */
     background-color: #3498db;
     color: #fff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
+    font-size: 0.9em; /* Reducción del tamaño de fuente para móviles */
 }
 
 .nav-btn:hover {
@@ -45,6 +49,7 @@ h1 {
 
 .view {
     display: none;
+    padding: 0 15px; /* Añadir padding para mejorar la visualización en móviles */
 }
 
 .view.active {
@@ -61,13 +66,13 @@ h1 {
 }
 
 .input-group label {
-    flex: 1;
+    flex: 1 0 100%; /* Coloca los labels en una nueva línea en dispositivos móviles */
     font-size: 1em;
     color: #555;
 }
 
 .input-group input, .input-group select {
-    flex: 2;
+    flex: 1 0 100%; /* Ajuste del input para ocupar todo el ancho en móviles */
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -78,11 +83,14 @@ h1 {
 button {
     background-color: #3498db;
     color: #fff;
-    font-size: 1em;
+    font-size: 0.9em; /* Ajuste de tamaño de fuente para móviles */
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
+    padding: 10px; /* Ajuste del padding para dispositivos móviles */
+    width: 100%; /* Hacer que los botones ocupen el 100% del ancho en dispositivos móviles */
+    margin-top: 5px;
 }
 
 button:hover {
@@ -93,6 +101,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    overflow-x: auto; /* Añadir scroll horizontal en dispositivos móviles */
 }
 
 table, th, td {
@@ -102,6 +111,7 @@ table, th, td {
 th, td {
     padding: 12px;
     text-align: left;
+    font-size: 0.9em; /* Reducción del tamaño de fuente para móviles */
 }
 
 th {
@@ -122,10 +132,10 @@ th {
 
 .modal-content {
     background-color: #fff;
-    margin: 10% auto;
+    margin: 5% auto; /* Reducción del margen para mejorar la visualización en móviles */
     padding: 20px;
     border: 1px solid #888;
-    width: 80%;
+    width: 90%; /* Ajuste del ancho de la modal para dispositivos móviles */
     max-width: 500px;
     border-radius: 10px;
 }
@@ -133,7 +143,7 @@ th {
 .close {
     color: #aaa;
     float: right;
-    font-size: 28px;
+    font-size: 24px; /* Reducción del tamaño de la fuente para móviles */
     font-weight: bold;
 }
 
@@ -146,4 +156,30 @@ th {
 
 .selected-row {
     background-color: #f0a3a3 !important;
+}
+
+/* Media Queries para dispositivos móviles */
+@media (max-width: 768px) {
+    .nav-btn {
+        width: 100%; /* Asegura que los botones de navegación ocupen todo el ancho en pantallas pequeñas */
+    }
+
+    .input-group, .filter-group {
+        flex-direction: column; /* Cambia a diseño de columna para pantallas pequeñas */
+        align-items: stretch; /* Asegura que los elementos se estiren a lo largo del contenedor */
+    }
+
+    .input-group input, .input-group select {
+        width: 100%; /* Ajuste de ancho completo para entradas en dispositivos móviles */
+    }
+
+    .product-management-buttons, .branch-management-buttons, .order-actions {
+        flex-direction: column; /* Botones en columna para pantallas pequeñas */
+        width: 100%; /* Ocupan todo el ancho del contenedor */
+    }
+
+    button {
+        width: 100%; /* Asegura que todos los botones sean del ancho completo en pantallas pequeñas */
+        font-size: 1em; /* Ajusta el tamaño del texto en botones */
+    }
 }
