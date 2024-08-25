@@ -27,7 +27,6 @@ h1 {
     display: flex;
     justify-content: center;
     gap: 10px;
-    flex-wrap: wrap; /* Para que los botones se acomoden en filas en pantallas pequeñas */
 }
 
 .nav-btn {
@@ -38,8 +37,6 @@ h1 {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-    flex: 1 1 auto; /* Ajusta los botones para que se adapten al ancho disponible */
-    text-align: center;
 }
 
 .nav-btn:hover {
@@ -54,7 +51,7 @@ h1 {
     display: block;
 }
 
-.input-group, .filter-group, .product-management-buttons, .branch-management-buttons, .order-actions {
+.input-group, .filter-group, .product-management-buttons, .branch-management-buttons {
     margin-bottom: 15px;
     display: flex;
     flex-wrap: wrap;
@@ -86,8 +83,6 @@ button {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-    padding: 10px;
-    width: 100%; /* Asegura que los botones se estiren al 100% del contenedor en pantallas pequeñas */
 }
 
 button:hover {
@@ -98,7 +93,6 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    font-size: 0.9em; /* Ajusta el tamaño de la fuente para dispositivos móviles */
 }
 
 table, th, td {
@@ -131,7 +125,7 @@ th {
     margin: 10% auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 90%;
+    width: 80%;
     max-width: 500px;
     border-radius: 10px;
 }
@@ -152,30 +146,4 @@ th {
 
 .selected-row {
     background-color: #f0a3a3 !important;
-}
-
-/* Media Queries para Responsividad */
-@media (max-width: 768px) {
-    h1 {
-        font-size: 1.8em; /* Tamaño de fuente más pequeño en pantallas móviles */
-    }
-
-    .input-group, .filter-group, .product-management-buttons, .branch-management-buttons, .order-actions {
-        flex-direction: column; /* Coloca los elementos en una columna en pantallas más pequeñas */
-        align-items: stretch;
-    }
-
-    .nav-btn {
-        flex: 1 1 100%; /* Cada botón ocupa el 100% del ancho del contenedor */
-        margin-bottom: 10px; /* Espacio inferior entre botones */
-    }
-
-    table, th, td {
-        font-size: 0.8em; /* Reduce el tamaño de fuente en tablas para dispositivos móviles */
-    }
-
-    .modal-content {
-        width: 95%; /* Mayor ancho para modales en dispositivos móviles */
-        margin-top: 20%; /* Margen superior mayor para ajustar la vista */
-    }
 }

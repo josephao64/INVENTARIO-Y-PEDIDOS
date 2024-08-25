@@ -1,4 +1,18 @@
-let db;
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCXoz2O8NLW7YEVESiwLn8hn_thuv-hhZM",
+    authDomain: "dbinventariopedidos.firebaseapp.com",
+    projectId: "dbinventariopedidos",
+    storageBucket: "dbinventariopedidos.appspot.com",
+    messagingSenderId: "653151022156",
+    appId: "1:653151022156:web:9c4b691472a1bb096218e9"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Inicializar arrays locales
 let products = [];
 let branches = [];
 let orders = [];
@@ -8,113 +22,65 @@ let selectedProductName = null;
 let selectedBranchName = null;
 let selectedOrderName = null;
 
+// Cargar datos iniciales desde Firestore
 window.onload = function () {
-    let request = indexedDB.open('InventoryDB', 1);
-
-    request.onerror = function (event) {
-        alert('Error al abrir la base de datos');
-    };
-
-    request.onsuccess = function (event) {
-        db = event.target.result;
-        alert('Base de datos abierta con éxito');
-        loadInitialData();
-    };
-
-    request.onupgradeneeded = function (event) {
-        db = event.target.result;
-
-        if (!db.objectStoreNames.contains('products')) {
-            db.createObjectStore('products', { keyPath: 'name' });
-        }
-
-        if (!db.objectStoreNames.contains('branches')) {
-            db.createObjectStore('branches', { keyPath: 'name' });
-        }
-
-        if (!db.objectStoreNames.contains('orders')) {
-            db.createObjectStore('orders', { autoIncrement: true });
-        }
-    };
+    loadInitialData();
 };
 
+// Funciones CRUD para Firebase
 function addProduct(product) {
-    let transaction = db.transaction(['products'], 'readwrite');
-    let store = transaction.objectStore('products');
-    store.add(product);
+    return db.collection('products').add(product);
 }
 
 function updateProduct(product) {
-    let transaction = db.transaction(['products'], 'readwrite');
-    let store = transaction.objectStore('products');
-    store.put(product);
+    return db.collection('products').doc(product.id).update(product);
 }
 
-function deleteProduct(productName) {
-    let transaction = db.transaction(['products'], 'readwrite');
-    let store = transaction.objectStore('products');
-    store.delete(productName);
+function deleteProduct(productId) {
+    return db.collection('products').doc(productId).delete();
 }
 
 function addBranch(branch) {
-    let transaction = db.transaction(['branches'], 'readwrite');
-    let store = transaction.objectStore('branches');
-    store.add(branch);
+    return db.collection('branches').add(branch);
 }
 
 function updateBranch(branch) {
-    let transaction = db.transaction(['branches'], 'readwrite');
-    let store = transaction.objectStore('branches');
-    store.put(branch);
+    return db.collection('branches').doc(branch.id).update(branch);
 }
 
-function deleteBranch(branchName) {
-    let transaction = db.transaction(['branches'], 'readwrite');
-    let store = transaction.objectStore('branches');
-    store.delete(branchName);
+function deleteBranch(branchId) {
+    return db.collection('branches').doc(branchId).delete();
 }
 
 function addOrder(order) {
-    let transaction = db.transaction(['orders'], 'readwrite');
-    let store = transaction.objectStore('orders');
-    store.add(order);
+    return db.collection('orders').add(order);
 }
 
 function loadInitialData() {
-    let transaction = db.transaction(['products'], 'readonly');
-    let store = transaction.objectStore('products');
-    let request = store.getAll();
-
-    request.onsuccess = function (event) {
-        products = event.target.result;
+    db.collection('products').get().then((querySnapshot) => {
+        products = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        displayProductTable();
         updateProductSelect();
         updateFilterOptions();
         updateAdjustProductSelect();
         updateExistingProductSelect();
-        displayProductTable();
-    };
+    });
 
-    let branchTransaction = db.transaction(['branches'], 'readonly');
-    let branchStore = branchTransaction.objectStore('branches');
-    let branchRequest = branchStore.getAll();
-
-    branchRequest.onsuccess = function (event) {
-        branches = event.target.result;
-        updateBranchSelect();
+    db.collection('branches').get().then((querySnapshot) => {
+        branches = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         displayBranchTable();
+        updateBranchSelect();
         updateFilterOptions();
-    };
+    });
 
-    let orderTransaction = db.transaction(['orders'], 'readonly');
-    let orderStore = orderTransaction.objectStore('orders');
-    let orderRequest = orderStore.getAll();
-
-    orderRequest.onsuccess = function (event) {
-        orders = event.target.result;
+    db.collection('orders').get().then((querySnapshot) => {
+        orders = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         orderList = orders;
         displayOrderListTable();
-    };
+    });
 }
+
+// Funciones de manejo de UI y lógica de negocio
 
 function addNewProduct() {
     let productName = document.getElementById('newProductName').value;
@@ -128,17 +94,18 @@ function addNewProduct() {
 
     let product = { name: productName, initialQuantity: productQuantity, currentQuantity: productQuantity, presentation: productPresentation };
     
-    addProduct(product);
-    products.push(product);
-    updateProductSelect();
-    updateFilterOptions();
-    updateAdjustProductSelect();
-    updateExistingProductSelect();
-    displayProductTable();
-    document.getElementById('newProductName').value = '';
-    document.getElementById('newProductQuantity').value = '';
-    document.getElementById('productPresentation').value = 'Unidad';
-    closeModal('addProductModal');
+    addProduct(product).then(() => {
+        products.push(product);
+        updateProductSelect();
+        updateFilterOptions();
+        updateAdjustProductSelect();
+        updateExistingProductSelect();
+        displayProductTable();
+        document.getElementById('newProductName').value = '';
+        document.getElementById('newProductQuantity').value = '';
+        document.getElementById('productPresentation').value = 'Unidad';
+        closeModal('addProductModal');
+    });
 }
 
 function addToExistingProduct() {
@@ -153,15 +120,16 @@ function addToExistingProduct() {
     let product = products.find(p => p.name === productName);
     if (product) {
         product.currentQuantity += addQuantity;
-        updateProduct(product);
-        alert('Cantidad agregada exitosamente.');
-        displayProductTable();
+        updateProduct(product).then(() => {
+            alert('Cantidad agregada exitosamente.');
+            displayProductTable();
+            document.getElementById('existingProductSelect').value = '';
+            document.getElementById('addQuantity').value = '';
+            closeModal('addExistingProductModal');
+        });
     } else {
         alert('Producto no encontrado.');
     }
-    document.getElementById('existingProductSelect').value = '';
-    document.getElementById('addQuantity').value = '';
-    closeModal('addExistingProductModal');
 }
 
 function adjustInventory() {
@@ -176,25 +144,28 @@ function adjustInventory() {
     let product = products.find(p => p.name === productName);
     if (product) {
         product.currentQuantity += adjustQuantity;
-        updateProduct(product);
-        alert('Inventario ajustado correctamente.');
-        displayProductTable();
+        updateProduct(product).then(() => {
+            alert('Inventario ajustado correctamente.');
+            displayProductTable();
+            document.getElementById('adjustProductSelect').value = '';
+            document.getElementById('adjustQuantity').value = '';
+            closeModal('adjustInventoryModal');
+        });
     } else {
         alert('Producto no encontrado.');
     }
-    document.getElementById('adjustProductSelect').value = '';
-    document.getElementById('adjustQuantity').value = '';
-    closeModal('adjustInventoryModal');
 }
 
 function deleteSelectedProduct() {
     if (selectedProductName) {
-        deleteProduct(selectedProductName);
-        products = products.filter(p => p.name !== selectedProductName);
-        displayProductTable();
-        selectedProductName = null;
-        alert('Producto eliminado correctamente.');
-        closeModal('confirmDeleteProductModal');
+        let product = products.find(p => p.name === selectedProductName);
+        deleteProduct(product.id).then(() => {
+            products = products.filter(p => p.name !== selectedProductName);
+            displayProductTable();
+            selectedProductName = null;
+            alert('Producto eliminado correctamente.');
+            closeModal('confirmDeleteProductModal');
+        });
     } else {
         alert('Por favor, seleccione un producto para eliminar.');
     }
@@ -210,25 +181,28 @@ function addNewBranch() {
 
     let branch = { name: branchName };
     
-    addBranch(branch);
-    branches.push(branch);
-    updateBranchSelect();
-    displayBranchTable();
-    updateFilterOptions();
-    document.getElementById('branchName').value = '';
-    closeModal('addBranchModal');
+    addBranch(branch).then(() => {
+        branches.push(branch);
+        updateBranchSelect();
+        displayBranchTable();
+        updateFilterOptions();
+        document.getElementById('branchName').value = '';
+        closeModal('addBranchModal');
+    });
 }
 
 function deleteSelectedBranch() {
     if (selectedBranchName) {
-        deleteBranch(selectedBranchName);
-        branches = branches.filter(b => b.name !== selectedBranchName);
-        displayBranchTable();
-        updateBranchSelect();
-        updateFilterOptions();
-        selectedBranchName = null;
-        alert('Sucursal eliminada correctamente.');
-        closeModal('confirmDeleteBranchModal');
+        let branch = branches.find(b => b.name === selectedBranchName);
+        deleteBranch(branch.id).then(() => {
+            branches = branches.filter(b => b.name !== selectedBranchName);
+            displayBranchTable();
+            updateBranchSelect();
+            updateFilterOptions();
+            selectedBranchName = null;
+            alert('Sucursal eliminada correctamente.');
+            closeModal('confirmDeleteBranchModal');
+        });
     } else {
         alert('Por favor, seleccione una sucursal para eliminar.');
     }
@@ -252,11 +226,12 @@ document.getElementById('addOrderItem').addEventListener('click', function () {
     let selectedProduct = products.find(p => p.name === product);
     if (selectedProduct && selectedProduct.currentQuantity >= quantity) {
         selectedProduct.currentQuantity -= quantity;
-        updateProduct(selectedProduct);
-        currentOrder.push({ branch, product, presentation: selectedProduct.presentation, quantity });
-        displayProductTable();
-        displayOrderItems();
-        document.getElementById('orderForm').reset();
+        updateProduct(selectedProduct).then(() => {
+            currentOrder.push({ branch, product, presentation: selectedProduct.presentation, quantity });
+            displayProductTable();
+            displayOrderItems();
+            document.getElementById('orderForm').reset();
+        });
     } else {
         alert('No hay suficiente inventario para agregar este producto.');
     }
@@ -448,6 +423,8 @@ function exportReportAsExcel() {
     document.body.removeChild(link);
 }
 
+// Funciones de UI
+
 function showView(viewId) {
     document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
     document.getElementById(viewId).style.display = 'block';
@@ -526,17 +503,6 @@ function updateFilterOptions() {
     });
 }
 
-function displayOrderItems() {
-    let orderItemsDiv = document.getElementById('orderItems');
-    orderItemsDiv.innerHTML = '';
-    currentOrder.forEach(order => {
-        let orderItem = document.createElement('div');
-        orderItem.className = 'order-item';
-        orderItem.innerHTML = `<p><strong>Sucursal:</strong> ${order.branch}, <strong>Producto:</strong> ${order.product} (${order.presentation}), <strong>Cantidad:</strong> ${order.quantity}</p>`;
-        orderItemsDiv.appendChild(orderItem);
-    });
-}
-
 function displayProductTable() {
     let productTableBody = document.getElementById('productTableBody');
     productTableBody.innerHTML = '';
@@ -579,6 +545,17 @@ function toggleBranchSelection(row, branchName) {
         row.classList.add('selected-row');
         selectedBranchName = branchName;
     }
+}
+
+function displayOrderItems() {
+    let orderItemsDiv = document.getElementById('orderItems');
+    orderItemsDiv.innerHTML = '';
+    currentOrder.forEach(order => {
+        let orderItem = document.createElement('div');
+        orderItem.className = 'order-item';
+        orderItem.innerHTML = `<p><strong>Sucursal:</strong> ${order.branch}, <strong>Producto:</strong> ${order.product} (${order.presentation}), <strong>Cantidad:</strong> ${order.quantity}</p>`;
+        orderItemsDiv.appendChild(orderItem);
+    });
 }
 
 function generateProductReport() {
